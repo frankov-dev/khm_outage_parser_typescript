@@ -1,0 +1,22 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "khmlight-outage-parser",
+	"main": "src/worker/index.ts",
+	"compatibility_date": "2026-11-24",
+	"cache": {
+		"enabled": true
+	},
+	"triggers": {
+		"crons": [
+			"7,22,37,52 * * * *"
+		]
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "khmlight-outages",
+			"database_id": "8dfc59d2-751d-4418-a4d7-892f3028e581",
+			"migrations_dir": "migrations"
+		}
+	]
+}
