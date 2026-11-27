@@ -1,8 +1,8 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: KHMlight Outage Parser API
   version: 1.0.0
-  description: >
+  description: >-
     REST API for Khmelnytskyi hourly power outage schedules (ГПВ) scraped from
     АТ «Хмельницькобленерго» (hoe.com.ua) and served from Cloudflare Workers + D1.
     All `/api/*` endpoints return precomputed minified JSON with `ETag` (`304 Not Modified`),
@@ -20,15 +20,16 @@ tags:
   - name: Schedules
     description: Outage schedule snapshots (current, per-queue, status, 14-day history, per-day revisions)
   - name: Operations
-    description: Worker & D1 health monitoring
+    description: Worker and D1 health monitoring
 
 paths:
   /api/current:
     get:
       operationId: getCurrentSchedules
-      tags: [Schedules]
+      tags:
+        - Schedules
       summary: Current today & tomorrow schedules in a single request
-      description: >
+      description: >-
         Primary endpoint for mobile clients. Returns today and tomorrow (in `Europe/Kyiv` time)
         with explicit availability statuses (`ACTIVE`, `NO_OUTAGES`, `UNAVAILABLE`) and the list
         of up to 14 available historical dates. Supports conditional polling via `If-None-Match`.
@@ -54,9 +55,10 @@ paths:
   /api/queues/{id}:
     get:
       operationId: getQueueSchedule
-      tags: [Schedules]
+      tags:
+        - Schedules
       summary: Single subqueue schedule (today + tomorrow + diff from previous revision)
-      description: >
+      description: >-
         Compact (~500 B) endpoint optimized for background workers (WorkManager), push notifications,
         and home-screen widgets. Includes precomputed `prevIntervals` and `deltaMinutes` against
         the previous same-day revision.
@@ -64,7 +66,7 @@ paths:
         - name: id
           in: path
           required: true
-          description: Subqueue identifier (`1.1` through `6.2`)
+          description: "Subqueue identifier (`1.1` through `6.2`)"
           schema:
             $ref: "#/components/schemas/SubqueueId"
         - $ref: "#/components/parameters/IfNoneMatch"
@@ -90,9 +92,10 @@ paths:
   /api/status:
     get:
       operationId: getStatus
-      tags: [Schedules]
+      tags:
+        - Schedules
       summary: Lightweight sync metadata and hashes
-      description: >
+      description: >-
         Minimal (~340 B) index containing `stateHash` (changes on data updates AND Kyiv midnight
         rollover), `dataHash` (changes only when schedule data changes), and available dates.
       parameters:
@@ -117,9 +120,10 @@ paths:
   /api/schedules:
     get:
       operationId: listSchedules
-      tags: [Schedules]
+      tags:
+        - Schedules
       summary: Active schedules for the last 14 days
-      description: >
+      description: >-
         Returns active schedules (sorted newest first, up to 14 days) without full revision arrays.
         Use `GET /api/schedules/{date}` to fetch chronological revisions for a specific day.
       parameters:
@@ -144,17 +148,18 @@ paths:
   /api/schedules/{date}:
     get:
       operationId: getScheduleByDate
-      tags: [Schedules]
+      tags:
+        - Schedules
       summary: Detailed schedule and chronological revision history for one date
-      description: >
-        Returns the active schedule for `date` together with all same-day revisions (`revNo: 1..N`),
+      description: >-
+        Returns the active schedule for `date` together with all same-day revisions (`revNo` 1..N),
         where each revision after the first contains a sparse `changedQueues` map of only the
         subqueues that changed relative to the previous revision.
       parameters:
         - name: date
           in: path
           required: true
-          description: Calendar date in `YYYY-MM-DD` format
+          description: "Calendar date in `YYYY-MM-DD` format"
           schema:
             $ref: "#/components/schemas/DateIso"
         - $ref: "#/components/parameters/IfNoneMatch"
@@ -180,9 +185,10 @@ paths:
   /health:
     get:
       operationId: getHealth
-      tags: [Operations]
+      tags:
+        - Operations
       summary: Worker, D1 connectivity, and cron sync health
-      description: >
+      description: >-
         Verifies D1 connectivity and returns the latest cron outcome. Status switches to
         `"degraded"` when `consecutiveFailures >= 3`. Always returned with `Cache-Control: no-store`.
       responses:
@@ -204,7 +210,7 @@ components:
       name: If-None-Match
       in: header
       required: false
-      description: Previously received `ETag` value (quoted or weak `W/"..."`) for conditional `304` polling
+      description: "Previously received `ETag` value (quoted or weak `W/\"...\"`) for conditional `304` polling"
       schema:
         type: string
         example: '"c7065daa2fcaa982"'
@@ -219,7 +225,7 @@ components:
       description: Edge and client caching directive
       schema:
         type: string
-        example: public, max-age=60, stale-while-revalidate=300
+        example: "public, max-age=60, stale-while-revalidate=300"
 
   responses:
     NotModified:
@@ -236,7 +242,7 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
           example:
-            error: Invalid subqueue id, expected 1.1..6.2
+            error: "Invalid subqueue id, expected 1.1..6.2"
     NotFound:
       description: Requested route or date snapshot does not exist
       content:
@@ -244,7 +250,7 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
           example:
-            error: Schedule not found
+            error: "Schedule not found"
     ServiceInitializing:
       description: Database has not been populated by a successful sync yet
       content:
@@ -252,12 +258,24 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
           example:
-            error: No schedule data available yet
+            error: "No schedule data available yet"
 
   schemas:
     SubqueueId:
       type: string
-      enum: ["1.1", "1.2", "2.1", "2.2", "3.1", "3.2", "4.1", "4.2", "5.1", "5.2", "6.1", "6.2"]
+      enum:
+        - "1.1"
+        - "1.2"
+        - "2.1"
+        - "2.2"
+        - "3.1"
+        - "3.2"
+        - "4.1"
+        - "4.2"
+        - "5.1"
+        - "5.2"
+        - "6.1"
+        - "6.2"
       example: "1.1"
 
     DateIso:
@@ -269,7 +287,7 @@ components:
     TimestampIso:
       type: string
       format: date-time
-      description: ISO-8601 timestamp with `Europe/Kyiv` offset (`+02:00` or `+03:00`)
+      description: "ISO-8601 timestamp with `Europe/Kyiv` offset (`+02:00` or `+03:00`)"
       example: "2026-11-27T00:22:03+02:00"
 
     Hash16:
@@ -280,20 +298,21 @@ components:
     MinuteInterval:
       type: array
       description: "`[startMin, endMin]` in integer minutes from midnight (`0 <= startMin < endMin <= 1440`)"
-      prefixItems:
-        - type: integer
-          minimum: 0
-          maximum: 1439
-        - type: integer
-          minimum: 1
-          maximum: 1440
+      items:
+        type: integer
+        minimum: 0
+        maximum: 1440
       minItems: 2
       maxItems: 2
-      example: [360, 480]
+      example:
+        - 360
+        - 480
 
     QueueSchedule:
       type: object
-      required: [intervals, offMinutes]
+      required:
+        - intervals
+        - offMinutes
       properties:
         intervals:
           type: array
@@ -307,35 +326,64 @@ components:
 
     QueuesMap:
       type: object
-      description: Canonical map containing all 12 subqueues (`1.1`..`6.2`)
-      required: ["1.1", "1.2", "2.1", "2.2", "3.1", "3.2", "4.1", "4.2", "5.1", "5.2", "6.1", "6.2"]
+      description: "Canonical map containing all 12 subqueues (`1.1`..`6.2`)"
+      required:
+        - "1.1"
+        - "1.2"
+        - "2.1"
+        - "2.2"
+        - "3.1"
+        - "3.2"
+        - "4.1"
+        - "4.2"
+        - "5.1"
+        - "5.2"
+        - "6.1"
+        - "6.2"
       properties:
-        "1.1": { $ref: "#/components/schemas/QueueSchedule" }
-        "1.2": { $ref: "#/components/schemas/QueueSchedule" }
-        "2.1": { $ref: "#/components/schemas/QueueSchedule" }
-        "2.2": { $ref: "#/components/schemas/QueueSchedule" }
-        "3.1": { $ref: "#/components/schemas/QueueSchedule" }
-        "3.2": { $ref: "#/components/schemas/QueueSchedule" }
-        "4.1": { $ref: "#/components/schemas/QueueSchedule" }
-        "4.2": { $ref: "#/components/schemas/QueueSchedule" }
-        "5.1": { $ref: "#/components/schemas/QueueSchedule" }
-        "5.2": { $ref: "#/components/schemas/QueueSchedule" }
-        "6.1": { $ref: "#/components/schemas/QueueSchedule" }
-        "6.2": { $ref: "#/components/schemas/QueueSchedule" }
+        "1.1":
+          $ref: "#/components/schemas/QueueSchedule"
+        "1.2":
+          $ref: "#/components/schemas/QueueSchedule"
+        "2.1":
+          $ref: "#/components/schemas/QueueSchedule"
+        "2.2":
+          $ref: "#/components/schemas/QueueSchedule"
+        "3.1":
+          $ref: "#/components/schemas/QueueSchedule"
+        "3.2":
+          $ref: "#/components/schemas/QueueSchedule"
+        "4.1":
+          $ref: "#/components/schemas/QueueSchedule"
+        "4.2":
+          $ref: "#/components/schemas/QueueSchedule"
+        "5.1":
+          $ref: "#/components/schemas/QueueSchedule"
+        "5.2":
+          $ref: "#/components/schemas/QueueSchedule"
+        "6.1":
+          $ref: "#/components/schemas/QueueSchedule"
+        "6.2":
+          $ref: "#/components/schemas/QueueSchedule"
 
     SparseQueuesDiff:
       type: object
-      description: Map containing only subqueues changed in this revision (all 12 for `revNo: 1`)
+      description: "Map containing only subqueues changed in this revision (all 12 for revNo 1)"
       additionalProperties:
         $ref: "#/components/schemas/QueueSchedule"
 
     DayStatus:
       type: string
-      enum: ["ACTIVE", "NO_OUTAGES"]
+      enum:
+        - ACTIVE
+        - NO_OUTAGES
 
     AvailabilityStatus:
       type: string
-      enum: ["ACTIVE", "NO_OUTAGES", "UNAVAILABLE"]
+      enum:
+        - ACTIVE
+        - NO_OUTAGES
+        - UNAVAILABLE
 
     RunOutcome:
       type: string
@@ -351,14 +399,21 @@ components:
 
     ApiDayView:
       type: object
-      required: [date, status, message, revisionCount, changedQueues, queues]
+      required:
+        - date
+        - status
+        - message
+        - revisionCount
+        - changedQueues
+        - queues
       properties:
         date:
           $ref: "#/components/schemas/DateIso"
         status:
           $ref: "#/components/schemas/AvailabilityStatus"
         message:
-          type: ["string", "null"]
+          type: string
+          nullable: true
         revisionCount:
           type: integer
           minimum: 0
@@ -367,13 +422,20 @@ components:
           items:
             $ref: "#/components/schemas/SubqueueId"
         queues:
-          oneOf:
+          allOf:
             - $ref: "#/components/schemas/QueuesMap"
-            - type: "null"
+          nullable: true
 
     ApiCurrentResponse:
       type: object
-      required: [source, stateHash, dataHash, updatedAt, today, tomorrow, availableDates]
+      required:
+        - source
+        - stateHash
+        - dataHash
+        - updatedAt
+        - today
+        - tomorrow
+        - availableDates
       properties:
         source:
           type: string
@@ -396,37 +458,51 @@ components:
 
     ApiQueueDayView:
       type: object
-      required: [date, status, message, intervals, offMinutes, prevIntervals, deltaMinutes]
+      required:
+        - date
+        - status
+        - message
+        - intervals
+        - offMinutes
+        - prevIntervals
+        - deltaMinutes
       properties:
         date:
           $ref: "#/components/schemas/DateIso"
         status:
           $ref: "#/components/schemas/AvailabilityStatus"
         message:
-          type: ["string", "null"]
+          type: string
+          nullable: true
         intervals:
-          oneOf:
-            - type: array
-              items:
-                $ref: "#/components/schemas/MinuteInterval"
-            - type: "null"
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/MinuteInterval"
         offMinutes:
-          type: ["integer", "null"]
+          type: integer
+          nullable: true
           minimum: 0
           maximum: 1440
         prevIntervals:
-          oneOf:
-            - type: array
-              items:
-                $ref: "#/components/schemas/MinuteInterval"
-            - type: "null"
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/MinuteInterval"
         deltaMinutes:
-          type: ["integer", "null"]
-          description: Difference in outage minutes vs previous revision (`+120` = 2h longer, `-60` = 1h shorter, `null` = unchanged)
+          type: integer
+          nullable: true
+          description: "Difference in outage minutes vs previous revision (+120 = 2h longer, -60 = 1h shorter, null = unchanged)"
 
     ApiQueueResponse:
       type: object
-      required: [source, queue, stateHash, updatedAt, today, tomorrow]
+      required:
+        - source
+        - queue
+        - stateHash
+        - updatedAt
+        - today
+        - tomorrow
       properties:
         source:
           type: string
@@ -482,14 +558,22 @@ components:
 
     ApiSchedulesHistoryItem:
       type: object
-      required: [date, status, message, revisionCount, changedQueues, queues, updatedAt]
+      required:
+        - date
+        - status
+        - message
+        - revisionCount
+        - changedQueues
+        - queues
+        - updatedAt
       properties:
         date:
           $ref: "#/components/schemas/DateIso"
         status:
           $ref: "#/components/schemas/DayStatus"
         message:
-          type: ["string", "null"]
+          type: string
+          nullable: true
         revisionCount:
           type: integer
           minimum: 1
@@ -504,7 +588,13 @@ components:
 
     ApiSchedulesListResponse:
       type: object
-      required: [source, stateHash, dataHash, updatedAt, availableDates, schedules]
+      required:
+        - source
+        - stateHash
+        - dataHash
+        - updatedAt
+        - availableDates
+        - schedules
       properties:
         source:
           type: string
@@ -526,7 +616,11 @@ components:
 
     ApiRevisionView:
       type: object
-      required: [revNo, recordedAt, message, changedQueues]
+      required:
+        - revNo
+        - recordedAt
+        - message
+        - changedQueues
       properties:
         revNo:
           type: integer
@@ -534,13 +628,23 @@ components:
         recordedAt:
           $ref: "#/components/schemas/TimestampIso"
         message:
-          type: ["string", "null"]
+          type: string
+          nullable: true
         changedQueues:
           $ref: "#/components/schemas/SparseQueuesDiff"
 
     ApiDayDetailResponse:
       type: object
-      required: [source, stateHash, date, status, message, revisionCount, queues, revisions, updatedAt]
+      required:
+        - source
+        - stateHash
+        - date
+        - status
+        - message
+        - revisionCount
+        - queues
+        - revisions
+        - updatedAt
       properties:
         source:
           type: string
@@ -552,7 +656,8 @@ components:
         status:
           $ref: "#/components/schemas/DayStatus"
         message:
-          type: ["string", "null"]
+          type: string
+          nullable: true
         revisionCount:
           type: integer
           minimum: 1
@@ -567,32 +672,41 @@ components:
 
     ApiHealthResponse:
       type: object
-      required: [status, dbReady, lastOutcome, lastSuccessAt, lastCheckedAt, consecutiveFailures]
+      required:
+        - status
+        - dbReady
+        - lastOutcome
+        - lastSuccessAt
+        - lastCheckedAt
+        - consecutiveFailures
       properties:
         status:
           type: string
-          enum: ["ok", "degraded"]
+          enum:
+            - ok
+            - degraded
         dbReady:
           type: boolean
         lastOutcome:
-          oneOf:
+          allOf:
             - $ref: "#/components/schemas/RunOutcome"
-            - type: "null"
+          nullable: true
         lastSuccessAt:
-          oneOf:
+          allOf:
             - $ref: "#/components/schemas/TimestampIso"
-            - type: "null"
+          nullable: true
         lastCheckedAt:
-          oneOf:
+          allOf:
             - $ref: "#/components/schemas/TimestampIso"
-            - type: "null"
+          nullable: true
         consecutiveFailures:
           type: integer
           minimum: 0
 
     ErrorResponse:
       type: object
-      required: [error]
+      required:
+        - error
       properties:
         error:
           type: string

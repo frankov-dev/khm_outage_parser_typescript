@@ -31,7 +31,7 @@
 ├── scripts/
 │   └── debug-parse.ts                   # Локальний CLI для налагодження на фікстурах або живому сайті
 ├── docs/
-│   └── openapi.yaml                     # OpenAPI 3.1 специфікація REST API
+│   └── openapi.yaml                     # OpenAPI 3.0.3 специфікація REST API
 └── tests/                               # Unit-тести (Node) + інтеграційні E2E у workerd із D1
 ```
 
@@ -44,7 +44,7 @@
 
 ## REST API
 
-Повна специфікація у форматі **OpenAPI 3.1**: [docs/openapi.yaml](docs/openapi.yaml).
+Повна специфікація у форматі **OpenAPI 3.0.3**: [docs/openapi.yaml](docs/openapi.yaml).
 
 Усі `/api/*` ендпоїнти повертають minified JSON, `Access-Control-Allow-Origin: *`, `ETag` (підтримка `If-None-Match` → `304 Not Modified`) і `Cache-Control: public, max-age=60, stale-while-revalidate=300`.
 
